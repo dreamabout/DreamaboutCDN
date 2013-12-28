@@ -253,7 +253,6 @@ class timthumb {
         }
 
         $cachePrefix = ($this->isURL ? '_ext_' : '_int_');
-header("X-debug: \"" . var_dump($_SERVER, true) . "\"");
         if($this->isURL){
             $this->cachefile = $this->cacheDirectory . '/' . $_SERVER["REQUEST_URI"];
         } else {
