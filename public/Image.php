@@ -255,9 +255,7 @@ class timthumb {
         $cachePrefix = ($this->isURL ? '_ext_' : '_int_');
 header("X-debug: \"" . var_dump($_SERVER, true) . "\"");
         if($this->isURL){
-            $arr = explode('&', $_SERVER ['QUERY_STRING']);
-            asort($arr);
-            $this->cachefile = $this->cacheDirectory . '/' . FILE_CACHE_PREFIX . $cachePrefix . md5($this->salt . implode('', $arr) . $this->fileCacheVersion) . FILE_CACHE_SUFFIX;
+            $this->cachefile = $this->cacheDirectory . '/' . $_SERVER["REQUEST_URI"];
         } else {
             $this->localImage = $this->getLocalImagePath($this->src);
             if(! $this->localImage){
@@ -526,12 +524,12 @@ header("X-debug: \"" . var_dump($_SERVER, true) . "\"");
         $sharpen = (bool) $this->param('s', DEFAULT_S);
         $canvas_color = $this->param('cc', DEFAULT_CC);
         $canvas_trans = (bool) $this->param('ct', '1');
-$zero = false;
+        $zero = false;
         // set default width and height if neither are set already
         if ($new_width == 0 && $new_height == 0) {
             $new_width = 100;
             $new_height = 100;
-$zero = true;
+            $zero = true;
         }
 
         // ensure size limits can not be abused
@@ -811,6 +809,7 @@ $zero = true;
         if(! $fh){
             return $this->error("Could not open the lockfile for writing an image.");
         }
+        mkdir(dirname($this->cachefile), 0777, true);
         if(flock($fh, LOCK_EX)){
             @unlink($this->cachefile); //rename generally overwrites, but doing this in case of platform specific quirks. File might not exist yet.
             rename($tempfile4, $this->cachefile);
@@ -986,6 +985,7 @@ $zero = true;
         $this->debug(3, "Fetching external image into temporary file $tempfile");
         $this->toDelete($tempfile);
         #fetch file here
+        mkdir(dirname($this->cachefile)), 0777, true);
         if(! $this->getURL($this->src, $tempfile)){
             @unlink($this->cachefile);
             touch($this->cachefile);
