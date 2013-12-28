@@ -799,7 +799,7 @@ header("X-debug: \"" . var_dump($_SERVER, true) . "\"");
         $tempfile4 = tempnam($this->cacheDirectory, 'timthumb_tmpimg_');
         $context = stream_context_create ();
         $fp = fopen($tempfile,'r',0,$context);
-        file_put_contents($tempfile4, $this->filePrependSecurityBlock . $imgType . ' ?' . '>'); //6 extra bytes, first 3 being image type
+        //file_put_contents($tempfile4, $this->filePrependSecurityBlock . $imgType . ' ?' . '>'); //6 extra bytes, first 3 being image type
         file_put_contents($tempfile4, $fp, FILE_APPEND);
         fclose($fp);
         @unlink($tempfile);
@@ -985,7 +985,7 @@ header("X-debug: \"" . var_dump($_SERVER, true) . "\"");
         $this->debug(3, "Fetching external image into temporary file $tempfile");
         $this->toDelete($tempfile);
         #fetch file here
-        mkdir(dirname($this->cachefile)), 0777, true);
+        mkdir(dirname($this->cachefile), 0777, true);
         if(! $this->getURL($this->src, $tempfile)){
             @unlink($this->cachefile);
             touch($this->cachefile);
