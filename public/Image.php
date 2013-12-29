@@ -21,27 +21,27 @@
 
 */
 define ('VERSION', '2.8.10');								// Version of this script
-if(! defined('DEBUG_ON') )					define ('DEBUG_ON', true);								// Enable debug logging to web server error log (STDERR)
+if(! defined('DEBUG_ON') )					define ('DEBUG_ON', false);								// Enable debug logging to web server error log (STDERR)
 if(! defined('DEBUG_LEVEL') )				define ('DEBUG_LEVEL', 3);								// Debug level 1 is less noisy and 3 is the most noisy
-if(! defined('MEMORY_LIMIT') )				define ('MEMORY_LIMIT', '30M');							// Set PHP memory limit
+if(! defined('MEMORY_LIMIT') )				define ('MEMORY_LIMIT', '50M');							// Set PHP memory limit
 if(! defined('BLOCK_EXTERNAL_LEECHERS') ) 	define ('BLOCK_EXTERNAL_LEECHERS', false);				// If the image or webshot is being loaded on an external site, display a red "No Hotlinking" gif.
 
 //Image fetching and caching
 if(! defined('ALLOW_EXTERNAL') )			define ('ALLOW_EXTERNAL', TRUE);						// Allow image fetching from external websites. Will check against ALLOWED_SITES if ALLOW_ALL_EXTERNAL_SITES is false
 if(! defined('ALLOW_ALL_EXTERNAL_SITES') ) 	define ('ALLOW_ALL_EXTERNAL_SITES', true);				// Less secure.
-if(! defined('FILE_CACHE_ENABLED') ) 		define ('FILE_CACHE_ENABLED', FALSE);					// Should we store resized/modified images on disk to speed things up?
+if(! defined('FILE_CACHE_ENABLED') ) 		define ('FILE_CACHE_ENABLED', true);					// Should we store resized/modified images on disk to speed things up?
 if(! defined('FILE_CACHE_TIME_BETWEEN_CLEANS'))	define ('FILE_CACHE_TIME_BETWEEN_CLEANS', 86400);	// How often the cache is cleaned
 
 if(! defined('FILE_CACHE_MAX_FILE_AGE') ) 	define ('FILE_CACHE_MAX_FILE_AGE', 86400);				// How old does a file have to be to be deleted from the cache
-if(! defined('FILE_CACHE_SUFFIX') ) 		define ('FILE_CACHE_SUFFIX', '.timthumb.txt');			// What to put at the end of all files in the cache directory so we can identify them
-if(! defined('FILE_CACHE_PREFIX') ) 		define ('FILE_CACHE_PREFIX', 'timthumb');				// What to put at the beg of all files in the cache directory so we can identify them
-if (!defined('FILE_CACHE_DIRECTORY')) define ('FILE_CACHE_DIRECTORY', __DIR__ . '/../../tmp/cache'); // Directory where images are cached. Left blank it will use the system temporary directory (which is better for security)
-if(! defined('MAX_FILE_SIZE') )				define ('MAX_FILE_SIZE', 10485760);						// 10 Megs is 10485760. This is the max internal or external file size that we'll process.
+if(! defined('FILE_CACHE_SUFFIX') ) 		define ('FILE_CACHE_SUFFIX', '');			// What to put at the end of all files in the cache directory so we can identify them
+if(! defined('FILE_CACHE_PREFIX') ) 		define ('FILE_CACHE_PREFIX', 't');				// What to put at the beg of all files in the cache directory so we can identify them
+if (!defined('FILE_CACHE_DIRECTORY')) define ('FILE_CACHE_DIRECTORY', '/var/www/ephemeral/'); // Directory where images are cached. Left blank it will use the system temporary directory (which is better for security)
+if(! defined('MAX_FILE_SIZE') )				define ('MAX_FILE_SIZE', 15*1024*1024);						// 10 Megs is 10485760. This is the max internal or external file size that we'll process.
 if(! defined('CURL_TIMEOUT') )				define ('CURL_TIMEOUT', 20);							// Timeout duration for Curl. This only applies if you have Curl installed and aren't using PHP's default URL fetching mechanism.
-if(! defined('WAIT_BETWEEN_FETCH_ERRORS') )	define ('WAIT_BETWEEN_FETCH_ERRORS', 3600);				//Time to wait between errors fetching remote file
+if(! defined('WAIT_BETWEEN_FETCH_ERRORS') )	define ('WAIT_BETWEEN_FETCH_ERRORS', 40);				//Time to wait between errors fetching remote file
 
 //Browser caching
-if(! defined('BROWSER_CACHE_MAX_AGE') ) 	define ('BROWSER_CACHE_MAX_AGE', 864000);				// Time to cache in the browser
+if(! defined('BROWSER_CACHE_MAX_AGE') ) 	define ('BROWSER_CACHE_MAX_AGE', 90*24*60*60); // 90 days				// Time to cache in the browser
 if(! defined('BROWSER_CACHE_DISABLE') ) 	define ('BROWSER_CACHE_DISABLE', false);				// Use for testing if you want to disable all browser caching
 
 //Image size and defaults
@@ -254,9 +254,7 @@ class timthumb {
 
         $cachePrefix = ($this->isURL ? '_ext_' : '_int_');
         if($this->isURL){
-            $arr = explode('&', $_SERVER ['QUERY_STRING']);
-            asort($arr);
-            $this->cachefile = $this->cacheDirectory . '/' . FILE_CACHE_PREFIX . $cachePrefix . md5($this->salt . implode('', $arr) . $this->fileCacheVersion) . FILE_CACHE_SUFFIX;
+            $this->cachefile = $this->cacheDirectory . '/' . $_SERVER["REQUEST_URI"];
         } else {
             $this->localImage = $this->getLocalImagePath($this->src);
             if(! $this->localImage){
@@ -525,12 +523,12 @@ class timthumb {
         $sharpen = (bool) $this->param('s', DEFAULT_S);
         $canvas_color = $this->param('cc', DEFAULT_CC);
         $canvas_trans = (bool) $this->param('ct', '1');
-$zero = false;
+        $zero = false;
         // set default width and height if neither are set already
         if ($new_width == 0 && $new_height == 0) {
             $new_width = 100;
             $new_height = 100;
-$zero = true;
+            $zero = true;
         }
 
         // ensure size limits can not be abused
@@ -800,7 +798,7 @@ $zero = true;
         $tempfile4 = tempnam($this->cacheDirectory, 'timthumb_tmpimg_');
         $context = stream_context_create ();
         $fp = fopen($tempfile,'r',0,$context);
-        file_put_contents($tempfile4, $this->filePrependSecurityBlock . $imgType . ' ?' . '>'); //6 extra bytes, first 3 being image type
+        //file_put_contents($tempfile4, $this->filePrependSecurityBlock . $imgType . ' ?' . '>'); //6 extra bytes, first 3 being image type
         file_put_contents($tempfile4, $fp, FILE_APPEND);
         fclose($fp);
         @unlink($tempfile);
@@ -810,6 +808,7 @@ $zero = true;
         if(! $fh){
             return $this->error("Could not open the lockfile for writing an image.");
         }
+        mkdir(dirname($this->cachefile), 0777, true);
         if(flock($fh, LOCK_EX)){
             @unlink($this->cachefile); //rename generally overwrites, but doing this in case of platform specific quirks. File might not exist yet.
             rename($tempfile4, $this->cachefile);
@@ -985,6 +984,7 @@ $zero = true;
         $this->debug(3, "Fetching external image into temporary file $tempfile");
         $this->toDelete($tempfile);
         #fetch file here
+        mkdir(dirname($this->cachefile), 0777, true);
         if(! $this->getURL($this->src, $tempfile)){
             @unlink($this->cachefile);
             touch($this->cachefile);
