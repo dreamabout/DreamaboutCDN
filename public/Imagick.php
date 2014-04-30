@@ -46,14 +46,11 @@ try {
     // no resizing, just point nginx to proper file
     if ($width === 0 && $height === 0) {
 
-        $response = new BinaryFileResponse(
-            $file,
-            200,
-            array("Content-Type" => "image/jpeg")
-        );
+        $response = new BinaryFileResponse($file);
         $response::trustXSendfileTypeHeader();
 
     } else {
+
         $img = new Imagick($file);
         $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
 
@@ -65,15 +62,22 @@ try {
         // Remove meta data
         $img->stripImage();
 
-        $img->setImageCompression(Imagick::COMPRESSION_JPEG);
-        $img->setImageCompressionQuality($quality);
+        $format = strtolower($img->getImageFormat());
+
+        if ($format === "jpeg") {
+            $img->setImageCompression(Imagick::COMPRESSION_JPEG);
+            $img->setImageCompressionQuality($quality);
+        } else if ($format === "png") {
+            $img->setImageCompression(Imagick::COMPRESSION_ZIP);
+            $img->setImageCompressionQuality(0);
+        }
 
         $response = new StreamedResponse(
             function() use ($img) {
                 echo $img;
             },
             200,
-            array("Content-Type" => "image/jpeg")
+            array("Content-Type" => "image/{$format}")
         );
         $response->setLastModified(DateTime::createFromFormat("U", time()));
         $response->setEtag($sha1);
@@ -82,6 +86,7 @@ try {
     $response->prepare($request);
 
 } catch (Exception $e) {
+    error_log($e->getMessage());
     $response = new Response("", 404);
 }
 
