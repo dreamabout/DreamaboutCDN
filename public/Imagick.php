@@ -64,6 +64,9 @@ try {
         // Remove meta data
         $img->stripImage();
 
+        $img->setImageCompression(Imagick::COMPRESSION_JPEG);
+        $img->setImageCompressionQuality(100);
+
         $response = new StreamedResponse(
             function() use ($img) {
                 echo $img;
