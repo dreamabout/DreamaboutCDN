@@ -16,9 +16,10 @@ set_error_handler(
     }
 );
 
-$src    = $_GET["src"];
-$width  = (int) $_GET["w"];
-$height = (int) $_GET["h"];
+$src     = $_GET["src"];
+$width   = (int) $_GET["w"];
+$height  = (int) $_GET["h"];
+$quality = (int) $_GET["q"];
 
 $sha1 = sha1($src);
 $dir1 = substr($sha1, 0, 2);
@@ -65,7 +66,7 @@ try {
         $img->stripImage();
 
         $img->setImageCompression(Imagick::COMPRESSION_JPEG);
-        $img->setImageCompressionQuality(100);
+        $img->setImageCompressionQuality($quality);
 
         $response = new StreamedResponse(
             function() use ($img) {
