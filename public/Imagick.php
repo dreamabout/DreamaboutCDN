@@ -40,23 +40,39 @@ try {
         }
     }
 
-    $img = new Imagick($file);
-    $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
+    $request = Request::createFromGlobals();
 
-    $w = $img->getImageWidth();
-    $h = $img->getImageHeight();
+    // no resizing, just point nginx to proper file
+    if ($width === 0 && $height === 0) {
 
-    $img->cropImage($width, $height, $w/2 - $width/2, $h/2 - $height/2);
+        $response = new BinaryFileResponse(
+            $file,
+            200,
+            array("Content-Type" => "image/jpeg")
+        );
+        $response::trustXSendfileTypeHeader();
 
-    $response = new StreamedResponse(
-        function() use ($img) {
-            echo $img;
-        },
-        200,
-        array("Content-Type" => "image/jpeg")
-    );
-    $response->setLastModified(DateTime::createFromFormat("U", time()));
-    $response->setEtag($sha1);
+    } else {
+        $img = new Imagick($file);
+        $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
+
+        $w = $img->getImageWidth();
+        $h = $img->getImageHeight();
+
+        $img->cropImage($width, $height, $w/2 - $width/2, $h/2 - $height/2);
+
+        $response = new StreamedResponse(
+            function() use ($img) {
+                echo $img;
+            },
+            200,
+            array("Content-Type" => "image/jpeg")
+        );
+        $response->setLastModified(DateTime::createFromFormat("U", time()));
+        $response->setEtag($sha1);
+    }
+
+    $response->prepare($request);
 
 } catch (Exception $e) {
     $response = new Response("", 404);
