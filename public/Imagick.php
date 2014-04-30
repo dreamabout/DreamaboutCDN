@@ -52,7 +52,11 @@ try {
     } else {
 
         $img = new Imagick($file);
-        $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
+        if ($width < $height) {
+            $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
+        } else {
+            $img->resizeImage(0, $height, imagick::FILTER_LANCZOS, 1);
+        }
 
         $w = $img->getImageWidth();
         $h = $img->getImageHeight();
