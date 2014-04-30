@@ -61,6 +61,9 @@ try {
 
         $img->cropImage($width, $height, $w/2 - $width/2, $h/2 - $height/2);
 
+        // Remove meta data
+        $img->stripImage();
+
         $response = new StreamedResponse(
             function() use ($img) {
                 echo $img;
