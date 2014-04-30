@@ -1,5 +1,12 @@
 <?php
 
+require "../autoload.php";
+
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 $root = "/var/www/ephemeral";
 
 // force exceptions
@@ -8,16 +15,6 @@ set_error_handler(
         throw new ErrorException($message, 0, $severity, $filename, $lineno);
     }
 );
-
-$symfony = dirname(__dir__) . "/vendors/Symfony/Component/HttpFoundation";
-
-require "{$symfony}/Response.php";
-require "{$symfony}/HeaderBag.php";
-require "{$symfony}/ResponseHeaderBag.php";
-require "{$symfony}/StreamedResponse.php";
-
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 $src    = $_GET["src"];
 $width  = (int) $_GET["w"];
