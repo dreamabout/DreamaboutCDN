@@ -68,6 +68,12 @@ try {
 
         $format = strtolower($img->getImageFormat());
 
+        // convert unsupported format to jpeg
+        if (!in_array($format, array("jpeg", "png", "gif"))) {
+            $img->setImageFormat("jpeg");
+            $format = "jpeg";
+        }
+
         if ($format === "jpeg") {
             $img->setImageCompression(Imagick::COMPRESSION_JPEG);
             $img->setImageCompressionQuality($quality);
