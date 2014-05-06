@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-$root = "/var/www/ephemeral";
+$root = "/var/www/ephemeral/orig";
 
 // force exceptions
 set_error_handler(
