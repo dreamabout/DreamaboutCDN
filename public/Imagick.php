@@ -51,6 +51,11 @@ try {
 
     } else {
 
+        // check size, we do not want to process files bigger than 5000x5000 px
+        $size = getimagesize($file);
+        if ($size[0] > 5000 || $size[1] > 5000) {
+            throw new Exception("Could not process file {$size[0]}x{$size[1]} big, src: {$src}");
+        }
         $img = new Imagick($file);
         if ($width < $height) {
             $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
