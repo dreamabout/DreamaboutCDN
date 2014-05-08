@@ -51,12 +51,24 @@ try {
 
     } else {
 
-        // check size, we do not want to process files bigger than 5000x5000 px
+        $img  = new Imagick;
         $size = getimagesize($file);
-        if ($size[0] > 5000 || $size[1] > 5000) {
-            throw new Exception("Could not process file {$size[0]}x{$size[1]} big, src: {$src}");
+
+        // additional hint for JPEG decoder
+        if ($size[2] === IMAGETYPE_JPEG) {
+            $widthHint  = $width * 2 > 5000 ? 5000 : $width * 2;
+            $heightHint = $height * 2 > 5000 ? 5000 : $height * 2;
+            if ($widthHint > $size[0]) {
+                $widthHint = $size[0];
+            }
+            if ($heightHint > $size[1]) {
+                $heightHint = $size[1];
+            }
+            $img->setOption("jpeg:size", "{$widthHint}x{$heightHint}");
         }
-        $img = new Imagick($file);
+
+        $img->readImage($file);
+
         if ($width < $height) {
             $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
         } else {
