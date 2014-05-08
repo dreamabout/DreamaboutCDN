@@ -69,16 +69,19 @@ try {
 
         $img->readImage($file);
 
-        if ($width < $height) {
+        if ($width < $height || $height === 0) {
             $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
         } else {
             $img->resizeImage(0, $height, imagick::FILTER_LANCZOS, 1);
         }
 
-        $w = $img->getImageWidth();
-        $h = $img->getImageHeight();
+        // crop only if both params are positive
+        if ($width > 0 && $height > 0) {
+            $w = $img->getImageWidth();
+            $h = $img->getImageHeight();
 
-        $img->cropImage($width, $height, $w/2 - $width/2, $h/2 - $height/2);
+            $img->cropImage($width, $height, $w/2 - $width/2, $h/2 - $height/2);
+        }
 
         // Remove meta data
         $img->stripImage();
