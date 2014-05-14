@@ -20,7 +20,11 @@ $src     = $_GET["src"];
 $width   = (int) $_GET["w"];
 $height  = (int) $_GET["h"];
 $quality = (int) $_GET["q"];
-
+if (isset($_GET["debug"])) {
+    $debug = $_GET["debug"];
+} else {
+    $debug = false;
+}
 $sha1 = sha1($src);
 $dir1 = substr($sha1, 0, 2);
 $dir2 = substr($sha1, 2, 2);
@@ -85,21 +89,31 @@ try {
         if (!($desiredHeight === 0 || $desiredWidth === 0)) {
             $ratioOriginal = $size[0] / $size[1];
             $ratioDesired  = $width / $height;
+            if ($debug) {
+                error_log(
+                    "Imagick resizing: RatioOriginal: {$ratioOriginal}, RatioDesired: {$ratioDesired}, dW: {$desiredWidth}, dH: {$desiredHeight}, oW: {$size[0]}, oH: {$size[1]}"
+                );
+            }
             if ($ratioDesired > $ratioOriginal) {
-                $desiredWidth = 0;
-            } else {
                 $desiredHeight = 0;
+            } else {
+                $desiredWidth = 0;
             }
         }
 
         $img->resizeimage($desiredWidth, $desiredHeight, imagick::FILTER_LANCZOS, 1);
-
+        if ($debug) {
+            error_log("Imagick resizing End: dW: {$desiredWidth}, dH: {$desiredHeight}");
+        }
         // crop only if both params are positive
         if ($width > 0 && $height > 0) {
             $w = $img->getImageWidth();
             $h = $img->getImageHeight();
+            if ($debug) {
+                error_log("Imagick Cropping: W: {$w}, H: {$h}");
+            }
 
-            $img->cropImage($width, $height, $w/2 - $width/2, $h/2 - $height/2);
+            $img->cropImage($width, $height, $w / 2 - $width / 2, $h / 2 - $height / 2);
         }
 
         // Remove meta data
@@ -116,13 +130,15 @@ try {
         if ($format === "jpeg") {
             $img->setImageCompression(Imagick::COMPRESSION_JPEG);
             $img->setImageCompressionQuality($quality);
-        } else if ($format === "png") {
-            $img->setImageCompression(Imagick::COMPRESSION_ZIP);
-            $img->setImageCompressionQuality(0);
+        } else {
+            if ($format === "png") {
+                $img->setImageCompression(Imagick::COMPRESSION_ZIP);
+                $img->setImageCompressionQuality(0);
+            }
         }
 
         $response = new StreamedResponse(
-            function() use ($img) {
+            function () use ($img) {
                 echo $img;
             },
             200,
