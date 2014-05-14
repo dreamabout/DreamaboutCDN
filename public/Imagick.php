@@ -68,13 +68,31 @@ try {
         }
 
         $img->readImage($file);
+        /*
+         *  Resizing an image:
+         *  Original Size: 830x900
+         *
+         *  Ratio orig: .922222222
+         *
+         *  Resized to: 700x1050
+         *  Resized Ratio: .666666667
+         *
+         *
+         */
+        $desiredWidth  = $width;
+        $desiredHeight = $height;
 
-        if($size[0] < $size[1]) {
-            $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
-        } else {
-            $img->resizeImage(0, $height, imagick::FILTER_LANCZOS, 1);
+        if (!($desiredHeight === 0 || $desiredWidth === 0)) {
+            $ratioOriginal = $size[0] / $size[1];
+            $ratioDesired  = $width / $height;
+            if ($ratioDesired > $ratioOriginal) {
+                $desiredWidth = 0;
+            } else {
+                $desiredHeight = 0;
+            }
         }
 
+        $img->resizeimage($desiredWidth, $desiredHeight, imagick::FILTER_LANCZOS, 1);
 
         // crop only if both params are positive
         if ($width > 0 && $height > 0) {
