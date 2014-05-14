@@ -68,8 +68,14 @@ try {
         }
 
         $img->readImage($file);
-        
-        $img->resizeImage($width, $height, imagick::FILTER_LANCZOS, 1);
+
+        if($size[0] < $size[1]) {
+            $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
+        } else {
+            $img->resizeImage(0, $height, imagick::FILTER_LANCZOS, 1);
+        }
+
+
         // crop only if both params are positive
         if ($width > 0 && $height > 0) {
             $w = $img->getImageWidth();
