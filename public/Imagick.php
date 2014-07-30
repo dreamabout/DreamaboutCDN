@@ -56,26 +56,26 @@ try {
     } else {
 
         $img  = new \Imagick();
-        $size = getimagesize($file);
+        list($imgWidth, $imgHeight, $type) = getimagesize($file);
 
         // additional hint for JPEG decoder
-        if ($size[2] === IMAGETYPE_JPEG) {
+        if ($type === IMAGETYPE_JPEG) {
             $widthHint  = $width * 2 > 5000 ? 5000 : $width * 2;
             $heightHint = $height * 2 > 5000 ? 5000 : $height * 2;
-            if ($widthHint > $size[0]) {
-                $widthHint = $size[0];
+            if ($widthHint > $imgWidth) {
+                $widthHint = $imgWidth;
             }
-            if ($heightHint > $size[1]) {
-                $heightHint = $size[1];
+            if ($heightHint > $imgHeight) {
+                $heightHint = $imgHeight;
             }
             $img->setOption("jpeg:size", "{$widthHint}x{$heightHint}");
         }
 
         $img->readImage($file);
 
-        if($size[0] < $size[1]) {
+        if($width < $height || $height === 0) {
             $img->resizeImage($width, 0, imagick::FILTER_LANCZOS, 1);
-        } else {
+        } else if ($height < $width || $width === 0) {
             $img->resizeImage(0, $height, imagick::FILTER_LANCZOS, 1);
         }
 
