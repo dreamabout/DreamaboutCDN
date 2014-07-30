@@ -1,13 +1,17 @@
 <?php
 
-require "../autoload.php";
+require __DIR__ ."/../autoload.php";
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-$root = "/var/www/ephemeral/orig";
+
+if (!defined("ROOT")) {
+   defined("ROOT", "/var/www/ephemeral/orig");
+}
+$root = ROOT;
 
 // force exceptions
 set_error_handler(
@@ -51,7 +55,7 @@ try {
 
     } else {
 
-        $img  = new Imagick;
+        $img  = new \Imagick();
         $size = getimagesize($file);
 
         // additional hint for JPEG decoder

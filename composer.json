@@ -1,0 +1,21 @@
+{
+    "name": "dreamabout/cdn",
+    "description": "Dreamabout's cdn resizing script",
+    "minimum-stability": "stable",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Thomas Faurbye Nielsen",
+            "email": "thomas@dreamabout.dk"
+        },
+        {
+            "name": "Daniel Konczyk",
+            "email": "daniel@dreamabout.dk"
+        }
+    ],
+    "require-dev": {
+    },
+    "require": {
+        "phpunit/phpunit": "3.7.*"
+    }
+}
