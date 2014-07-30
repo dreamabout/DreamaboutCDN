@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
 if (!defined("ROOT")) {
-   defined("ROOT", "/var/www/ephemeral/orig");
+   define("ROOT", "/var/www/ephemeral/orig");
 }
 $root = ROOT;
 
