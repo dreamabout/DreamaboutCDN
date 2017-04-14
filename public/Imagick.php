@@ -16,10 +16,14 @@ set_error_handler(
     }
 );
 
-$src     = $_GET["src"];
-$width   = (int) $_GET["w"];
-$height  = (int) $_GET["h"];
+$src = $_GET["src"];
+$width = (int) $_GET["w"];
+$height = (int) $_GET["h"];
 $quality = (int) $_GET["q"];
+$version = 1;
+if (isset($_GET['v'])) {
+    $version = (int) $_GET['v'];
+}
 if (isset($_GET["debug"])) {
     $debug = $_GET["debug"];
 } else {
@@ -55,13 +59,13 @@ try {
 
     } else {
 
-        $img  = new Imagick;
+        $img = new Imagick();
         $size = getimagesize($file);
 
         // additional hint for JPEG decoder
         if ($size[2] === IMAGETYPE_JPEG) {
-            $widthHint  = $width * 2 > 5000 ? 5000 : $width * 2;
-            $heightHint = $height * 2 > 5000 ? 5000 : $height * 2;
+            $widthHint = min($width * 2, 5000);
+            $heightHint = min($height * 2, 5000);
             if ($widthHint > $size[0]) {
                 $widthHint = $size[0];
             }
@@ -83,39 +87,80 @@ try {
          *
          *
          */
-        $desiredWidth  = $width;
-        $desiredHeight = $height;
 
-        if (!($desiredHeight === 0 || $desiredWidth === 0)) {
-            $ratioOriginal = $size[0] / $size[1];
-            $ratioDesired  = $width / $height;
-            if ($debug) {
-                error_log(
-                    "Imagick resizing: RatioOriginal: {$ratioOriginal}, RatioDesired: {$ratioDesired}, dW: {$desiredWidth}, dH: {$desiredHeight}, oW: {$size[0]}, oH: {$size[1]}"
-                );
-            }
-            if ($ratioDesired > $ratioOriginal) {
-                $desiredHeight = 0;
-            } else {
-                $desiredWidth = 0;
-            }
-        }
+        // crop /extend only if both params are positive
 
-        $img->resizeimage($desiredWidth, $desiredHeight, imagick::FILTER_LANCZOS, 1);
-        if ($debug) {
-            error_log("Imagick resizing End: dW: {$desiredWidth}, dH: {$desiredHeight}");
-        }
-        // crop only if both params are positive
         if ($width > 0 && $height > 0) {
-            $w = $img->getImageWidth();
-            $h = $img->getImageHeight();
-            if ($debug) {
-                error_log("Imagick Cropping: W: {$w}, H: {$h}");
+            list($srcWidth, $srcHeight) = $size;
+            $ratioOriginal = $srcWidth / $srcHeight;
+
+            switch ($version) {
+                default:
+                case 1:
+                    $desiredWidth = $width;
+                    $desiredHeight = $height;
+
+                    if (!($desiredHeight === 0 || $desiredWidth === 0)) {
+                        $ratioDesired = $width / $height;
+                        if ($debug) {
+                            error_log(
+                                "Imagick resizing: RatioOriginal: {$ratioOriginal}, RatioDesired: {$ratioDesired}, dW: {$desiredWidth}, dH: {$desiredHeight}, oW: {$size[0]}, oH: {$size[1]}"
+                            );
+                        }
+                        if ($ratioDesired > $ratioOriginal) {
+                            $desiredHeight = 0;
+                        } else {
+                            $desiredWidth = 0;
+                        }
+                    }
+
+                    $img->resizeImage($desiredWidth, $desiredHeight, imagick::FILTER_LANCZOS, 1);
+                    if ($debug) {
+                        error_log("Imagick resizing End: dW: {$desiredWidth}, dH: {$desiredHeight}");
+                    }
+                    $w = $img->getImageWidth();
+                    $h = $img->getImageHeight();
+                    if ($debug) {
+                        error_log("Imagick Cropping: W: {$w}, H: {$h}");
+                    }
+
+                    $img->cropImage($width, $height, $w / 2 - $width / 2, $h / 2 - $height / 2);
+                    break;
+                case 2:
+
+                    $img->resizeImage($width, $height, imagick::FILTER_LANCZOS, 1, true);
+
+                    $canvas = new Imagick();
+
+                    if ($img->getImageFormat() !== 'PNG') {
+                        $canvas->newImage($width, $height, 'white', 'jpg');
+                    } else {
+                        $canvas->newImage($width, $height, 'none', 'png');
+                    }
+
+                    $geometry = $img->getImageGeometry();
+
+                    /* The overlay x and y coordinates */
+                    $x = ($width - $geometry['width']) / 2;
+                    $y = ($height - $geometry['height']) / 2;
+                    if ($debug) {
+                        var_dump(
+                            [
+                                'x' => $x,
+                                'y' => $y,
+                                'geometry' => $geometry,
+                                'w' => $width,
+                                'h' => $height,
+                                'srcW' => $srcWidth,
+                                'srcH' => $srcHeight,
+                            ]
+                        );
+                        die();
+                    }
+                    $canvas->compositeImage($img, imagick::COMPOSITE_OVER, $x, $y);
+                    $img = $canvas;
             }
-
-            $img->cropImage($width, $height, $w / 2 - $width / 2, $h / 2 - $height / 2);
         }
-
         // Remove meta data
         $img->stripImage();
 
